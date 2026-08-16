@@ -26,7 +26,7 @@ nodeextensions.register_shape_for_node(node_name, shape_definition, flags)
 nodeextensions.register_shape_process(shape_name, shape_definition)
 ```
 
-## Placement rules
+### Placement rules
 ```lua
 nodeextensions.dig_and_collect_node(pos, digger)
 nodeextensions.only_place_above(itemstack, placer, pointed_thing, groups)
@@ -35,7 +35,7 @@ nodeextensions.item_place_node(itemstack, placer, pointed_thing, param2, prevent
 nodeextensions.has_pointable_node_at(pos, group)
 ```
 
-## Placement and rotation
+### Placement and rotation
 ```lua
 nodeextensions.get_place_position_from_pointed_thing(pointed_thing)
 nodeextensions.rotate_and_place(itemstack, placer, pointed_thing)

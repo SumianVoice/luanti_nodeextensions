@@ -1,4 +1,7 @@
 
+---@class ItemStack
+---@class ObjectRef
+
 -- just use a lookup table because it's easier
 nodeextensions.p.node_dirs = {
 	[tostring(vector.new(1, 0, 0))] = 12 + 1,
@@ -36,6 +39,8 @@ local function get_ndef(pos)
 end
 
 ---Gets the position a pointed thing would build to, e.g. if buildable_to it will be `under`.
+---@param pointed_thing table
+---@return vector|nil
 function nodeextensions.get_place_position_from_pointed_thing(pointed_thing)
 	local ndef_under = get_ndef(pointed_thing.under)
 	local ndef_above = get_ndef(pointed_thing.above)
@@ -48,7 +53,12 @@ function nodeextensions.get_place_position_from_pointed_thing(pointed_thing)
 	end
 end
 
--- places the node so that the base of the node is attached to the face of the node you're pointing at
+---Places the node so that the base of the node is attached to the face of the node you're pointing at (see wood logs).
+---@param itemstack ItemStack
+---@param placer ObjectRef
+---@param pointed_thing table|nil
+---@return ItemStack|nil
+---@return nil
 function nodeextensions.rotate_and_place(itemstack, placer, pointed_thing)
 	local ret = nodeextensions.try_rightclick(itemstack, placer, nil, false)
 	if ret then
@@ -61,20 +71,33 @@ function nodeextensions.rotate_and_place(itemstack, placer, pointed_thing)
 	return stack
 end
 
+---Rotates so that the +z face is against the node pointed at.
+---@param itemstack ItemStack
+---@param placer ObjectRef
+---@param pointed_thing table
+---@param flags table|nil
+---@return ItemStack|nil
+---@return vector|nil
+--[[
+## Example:
+
+	nodeextensions.rotate_and_place_against(itemstack, placer, pointed_thing, {
+		can_place = function(predict_pos, node) return true or false end,
+		no_rightclick = false, -- doesn't call try_rightclick
+		copy_same_node = false, -- if true, copies the rotation of the node you're pointing at
+	})
+--]]
 function nodeextensions.rotate_and_place_against(itemstack, placer, pointed_thing, flags)
 	itemstack = ItemStack(itemstack)
 	if not (flags and flags.no_rightclick) then
 		local ret = nodeextensions.try_rightclick(itemstack, placer, pointed_thing, false)
-		if ret then
-			return ret, nil
-		end
+		if ret then return ret, nil end
 	end
 	-- make sure you don't index nil
 	if flags == nil then flags = {} end
 
 	-- get the name of the node
 	local wield_name = itemstack:get_name()
-
 	local facedir = 0
 
 	-- copy the node you're placing it to if the flag is set
@@ -118,14 +141,18 @@ local stair_look_dir = {
 	[tostring(vector.new(-1, 0, 0))] = 3,
 }
 
-
+---Gets the pointed thing via raycast so it also has intersection_point etc
+---@param itemstack ItemStack
+---@param player ObjectRef
+---@param pointed_thing table
+---@param flags table|nil
+---@return table|nil
 function nodeextensions.get_ray_intersect_from_look(itemstack, player, pointed_thing, flags)
 	local lookdir = vector.normalize(player:get_look_dir())
 	local pos = get_eyepos(player)
 	local range = itemstack:get_definition().range or 12
 	local lookpos = vector.multiply(lookdir, range)
 	lookpos = vector.add(lookpos, pos)
-	pointed_thing = nil
 
 	local ray = core.raycast(pos, lookpos, false, false)
 	for pt in ray do
@@ -137,7 +164,11 @@ function nodeextensions.get_ray_intersect_from_look(itemstack, player, pointed_t
 	return pointed_thing
 end
 
-
+---Places node upside down if looking at the top half of a node, and pointing toward the player
+---@param itemstack ItemStack
+---@param placer ObjectRef
+---@param pointed_thing table|nil
+---@param flags table
 function nodeextensions.rotate_and_place_stair(itemstack, placer, pointed_thing, flags)
 	local ret = nodeextensions.try_rightclick(itemstack, placer, nil)
 	if ret then return ret end
@@ -147,9 +178,7 @@ function nodeextensions.rotate_and_place_stair(itemstack, placer, pointed_thing,
 	if (not def) or not (def.buildable_to) then return itemstack end
 
 	pointed_thing = nodeextensions.get_ray_intersect_from_look(itemstack, placer, pointed_thing, flags)
-
-	if (not pointed_thing) or not pointed_thing.intersection_point then
-		return itemstack end
+	if (not pointed_thing) or not pointed_thing.intersection_point then return itemstack end
 
 	local facedir = 0
 	local intpos = pointed_thing.intersection_point
@@ -194,7 +223,7 @@ nodeextensions.p.quarter_facedir_map = {
 		local fi = self.face_axis_ignore[face]
 		ta[fi] = "1"
 		local t = table.concat(ta)
-		return self[t] or 0
+		return (self[t] or 0)%24
 	end,
 	-- if e.g. the top face of the node, then ignore Y, etc
 	face_axis_ignore = {
@@ -206,49 +235,70 @@ nodeextensions.p.quarter_facedir_map = {
 		[0]=3,
 	},
 
-	["5:111"] = 0,
-	["5:011"] = 2,
-	["5:001"] = 20,
-	["5:101"] = 22,
+	["5:101"] = 4,
+	["5:111"] = 5,
+	["5:011"] = 6,
+	["5:001"] = 7,
 
-	["4:101"] = 22,
-	["4:001"] = 20,
-	["4:111"] = 0,
-	["4:011"] = 2,
+	["4:111"] = 8,
+	["4:101"] = 9,
+	["4:001"] = 10,
+	["4:011"] = 11,
 
-	["2:100"] = 23,
-	["2:101"] = 21,
-	["2:111"] = 1,
-	["2:110"] = 3,
+	["3:100"] = 12,
+	["3:101"] = 13,
+	["3:111"] = 14,
+	["3:110"] = 15,
 
-	["3:100"] = 23,
-	["3:101"] = 21,
-	["3:111"] = 1,
-	["3:110"] = 3,
+	["2:110"] = 16,
+	["2:111"] = 17,
+	["2:101"] = 18,
+	["2:100"] = 19,
 
-	["1:111"] = 8,
-	["1:011"] = 10,
-	["1:010"] = 6,
-	["1:110"] = 4,
+	["1:111"] = 1,
+	["1:011"] = 2,
+	["1:010"] = 3,
+	["1:110"] = 0,
 
-	["0:110"] = 4,
-	["0:010"] = 6,
-	["0:111"] = 8,
-	["0:011"] = 10,
+	["0:010"] = 20,
+	["0:011"] = 21,
+	["0:111"] = 22,
+	["0:110"] = 23,
 }
 
+--[[
+core.register_tool("nodeextensions:rotator", {
+	description = "node rotator debug",
+	on_place = function(itemstack, placer, pointed_thing)
+		local pos = pointed_thing.under
+		local node = core.get_node(pos)
+		node.param2 = (node.param2 + 1) % 24
+		core.swap_node(pos, node)
+		core.log(node.param2)
+	end,
+})
+--]]
+
+---Rotates so that a node's -x, -y, -z face is attached to the "quarter" of the node you're looking at.
+---No guarantees on up/down orientation...
+---@param itemstack ItemStack
+---@param placer ObjectRef
+---@param pointed_thing table|nil
+---@param flags table|nil
+---@return ItemStack|nil
+---@return vector|nil
 function nodeextensions.rotate_and_place_quarter(itemstack, placer, pointed_thing, flags)
 	local ret = nodeextensions.try_rightclick(itemstack, placer, nil)
-	if ret then return ret end
-	if not pointed_thing then return itemstack end
+	if ret then return ret, nil end
+	if not pointed_thing then return itemstack, nil end
 	if pointed_thing.type ~= "node" then return itemstack end
 	local def = core.registered_nodes[core.get_node(pointed_thing.above).name]
-	if (not def) or not (def.buildable_to) then return itemstack end
+	if (not def) or not (def.buildable_to) then return itemstack, nil end
 
 	pointed_thing = nodeextensions.get_ray_intersect_from_look(itemstack, placer, pointed_thing, flags)
 
 	if (not pointed_thing) or not pointed_thing.intersection_point then
-		return itemstack end
+		return itemstack, nil end
 
 	local facedir = 0
 	local intpos = pointed_thing.intersection_point
