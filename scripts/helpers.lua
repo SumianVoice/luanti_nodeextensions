@@ -22,7 +22,7 @@ function nodeextensions.try_rightclick(itemstack, user, pointed_thing, dry)
 			end
 			return itemstack
 		end
-		return
+		return nil
 	end
 	return nil
 end

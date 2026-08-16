@@ -60,7 +60,7 @@ end
 ---@return ItemStack|nil
 ---@return nil
 function nodeextensions.rotate_and_place(itemstack, placer, pointed_thing)
-	local ret = nodeextensions.try_rightclick(itemstack, placer, nil, false)
+	local ret = nodeextensions.try_rightclick(itemstack, placer, pointed_thing, false)
 	if ret then
 		return ret, nil
 	end
@@ -170,7 +170,7 @@ end
 ---@param pointed_thing table|nil
 ---@param flags table
 function nodeextensions.rotate_and_place_stair(itemstack, placer, pointed_thing, flags)
-	local ret = nodeextensions.try_rightclick(itemstack, placer, nil)
+	local ret = nodeextensions.try_rightclick(itemstack, placer, pointed_thing, false)
 	if ret then return ret end
 	if not pointed_thing then return itemstack end
 	if pointed_thing.type ~= "node" then return itemstack end
@@ -288,7 +288,7 @@ core.register_tool("nodeextensions:rotator", {
 ---@return ItemStack|nil
 ---@return vector|nil
 function nodeextensions.rotate_and_place_quarter(itemstack, placer, pointed_thing, flags)
-	local ret = nodeextensions.try_rightclick(itemstack, placer, nil)
+	local ret = nodeextensions.try_rightclick(itemstack, placer, pointed_thing, false)
 	if ret then return ret, nil end
 	if not pointed_thing then return itemstack, nil end
 	if pointed_thing.type ~= "node" then return itemstack end
