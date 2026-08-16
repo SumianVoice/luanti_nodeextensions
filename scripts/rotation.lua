@@ -280,7 +280,6 @@ core.register_tool("nodeextensions:rotator", {
 --]]
 
 ---Rotates so that a node's -x, -y, -z face is attached to the "quarter" of the node you're looking at.
----No guarantees on up/down orientation...
 ---@param itemstack ItemStack
 ---@param placer ObjectRef
 ---@param pointed_thing table|nil
